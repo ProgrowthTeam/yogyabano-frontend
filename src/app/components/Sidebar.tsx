@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Drawer,
@@ -62,10 +62,17 @@ const StyledTagline = styled(Typography)(({ theme }) => ({
   marginLeft: "10px",
 }));
 
-const StyledListItem = styled(ListItem)(() => ({
-  display: "flex",
-  justifyContent: "left",
-}));
+const StyledListItem = styled(ListItem)<{ active: boolean }>(
+  ({ active, theme }) => ({
+    display: "flex",
+    justifyContent: "left",
+    backgroundColor: active ? "#FFEAD9" : "inherit",
+    color: active ? "#FF7500" : "inherit",
+    "& .MuiListItemIcon-root": {
+      color: active ? "#FF7500" : "inherit",
+    },
+  })
+);
 
 const ListItemContainer = styled(ListItem)(() => ({
   display: "flex",
@@ -79,7 +86,7 @@ const handleLogout = async (item: SidebarItemBottom) => {
   if (item.name === "Logout") {
     const { error } = await logout();
     if (error) {
-        toast.error("Error logging out");
+      toast.error("Error logging out");
     } else {
       sessionStorage.removeItem("user");
     }
@@ -87,6 +94,12 @@ const handleLogout = async (item: SidebarItemBottom) => {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
+  const [activeItem, setActiveItem] = useState<string>("");
+
+  const handleItemClick = (name: string) => {
+    setActiveItem(name);
+  };
+
   return (
     <DrawerStyled variant="permanent">
       <YogyabanoLogo>
@@ -99,7 +112,10 @@ const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
         <List sx={{ width: "100%" }}>
           {topItems.map((item, index) => (
             <Link key={index} href={item.path} passHref>
-              <StyledListItem>
+              <StyledListItem
+                active={activeItem === item.name}
+                onClick={() => handleItemClick(item.name)}
+              >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.name} />
               </StyledListItem>
@@ -110,7 +126,13 @@ const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
           <Divider />
           {bottomItems.map((item, index) => (
             <Link key={index} href={item.path} passHref>
-              <StyledListItem onClick={() => handleLogout(item)}>
+              <StyledListItem
+                active={activeItem === item.name}
+                onClick={() => {
+                  handleItemClick(item.name);
+                  handleLogout(item);
+                }}
+              >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.name} />
               </StyledListItem>

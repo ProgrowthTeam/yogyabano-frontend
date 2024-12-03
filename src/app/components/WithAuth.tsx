@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify"; // Assuming you have react-toastify installed
+import withLayout from "./withLayout";
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
   const AuthComponent = (props: any) => {
@@ -41,7 +42,7 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
     return isAuthenticated ? <WrappedComponent {...props} /> : null;
   };
 
-  return AuthComponent;
+  return withLayout(AuthComponent);
 };
 
 export default withAuth;
