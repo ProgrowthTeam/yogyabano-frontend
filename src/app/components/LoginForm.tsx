@@ -138,7 +138,9 @@ export default function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { error } = await loginUser(email, password);
+    const { data, error } = await loginUser(email, password);
+    sessionStorage.setItem("user", JSON.stringify(data));
+    console.log("kishan", data)
 
     if (error) {
       setError(error);
@@ -212,7 +214,7 @@ export default function LoginForm() {
           >
             {loading ? <CircularProgress size={24} /> : "Continue"}
           </StyledButton>
-          <StyledTermsandConditions variant="h6" onClick={handleOpen}>
+          {/* <StyledTermsandConditions variant="h6" onClick={handleOpen}>
             Terms and Conditions
           </StyledTermsandConditions>
           <StyledSignUp>
@@ -220,7 +222,7 @@ export default function LoginForm() {
             <StyledLink href={"https://www.yogyabano.com/contact-us"}>
               Click here
             </StyledLink>
-          </StyledSignUp>
+          </StyledSignUp> */}
         </Box>
       </StyledLoginForm>
       <Modal

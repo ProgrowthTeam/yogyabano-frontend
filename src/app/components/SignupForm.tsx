@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import { v4 as uuidv4 } from "uuid";
 import {
   TextField,
   Button,
@@ -122,6 +123,8 @@ const StyledDisclaimer = styled(Typography)(() => ({
 export default function SignupForm() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
@@ -134,12 +137,17 @@ export default function SignupForm() {
     setLoading(true);
     setError("");
 
+    const options = {
+      apiKey: apiKey,
+      companyId: uuidv4(),
+      companyName: companyName,
+    };
     const response = await fetch("/api/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, options }),
     });
 
     const result = await response.json();
@@ -169,9 +177,7 @@ export default function SignupForm() {
         <StyledTypographySubHeading variant="h6">
           Create your account
         </StyledTypographySubHeading>
-        {error && (
-        <ErrorMessage message={error} />
-        )}
+        {error && <ErrorMessage message={error} />}
         <TextField
           label="Email"
           type="email"
@@ -192,6 +198,26 @@ export default function SignupForm() {
           fullWidth
           margin="normal"
         />
+        <TextField
+          label="API Key"
+          type="password"
+          value={apiKey}
+          sx={{ maxWidth: 360 }}
+          onChange={(e) => setApiKey(e.target.value)}
+          required
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Company Name"
+          type="name"
+          value={companyName}
+          sx={{ maxWidth: 360 }}
+          onChange={(e) => setCompanyName(e.target.value)}
+          required
+          fullWidth
+          margin="normal"
+        />
         <Box sx={{ mt: 2, position: "relative" }}>
           <StyledButton
             type="submit"
@@ -208,9 +234,7 @@ export default function SignupForm() {
           </StyledTermsandConditions>
           <StyledSignUp>
             Have an account?&nbsp;
-            <StyledLink href={"/"}>
-              Click here to Login
-            </StyledLink>
+            <StyledLink href={"/"}>Click here to Login</StyledLink>
           </StyledSignUp>
         </Box>
       </StyledLoginForm>
@@ -288,11 +312,11 @@ export default function SignupForm() {
               cycle ends.
             </StyledDisclaimer>
             <StyledDisclaimer>
-              Our services are provided &quot;as is,&quot; without warranties, and we are
-              not liable for indirect damages. Users agree to indemnify us
-              against claims arising from their use of our services. These terms
-              are governed by Indian law, with disputes subject to Bangalore
-              courts.
+              Our services are provided &quot;as is,&quot; without warranties,
+              and we are not liable for indirect damages. Users agree to
+              indemnify us against claims arising from their use of our
+              services. These terms are governed by Indian law, with disputes
+              subject to Bangalore courts.
             </StyledDisclaimer>
             <StyledDisclaimer>
               For any questions, please contact us at &nbsp;
