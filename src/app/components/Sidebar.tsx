@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Drawer,
   Divider,
@@ -13,21 +14,16 @@ import { styled } from "@mui/material/styles";
 import { logout } from "../services/logout";
 import { toast } from "react-toastify";
 
-interface SidebarItemTop {
-  icon: React.ReactElement;
-  name: string;
-  path: string;
-}
-
-interface SidebarItemBottom {
+interface SidebarItem {
   icon: React.ReactElement;
   name: string;
   path: string;
 }
 
 interface SidebarProps {
-  topItems: SidebarItemTop[];
-  bottomItems: SidebarItemBottom[];
+  topItems: SidebarItem[];
+  bottomItems: SidebarItem[];
+  onItemClick: (item: SidebarItem) => void;
 }
 
 const DrawerStyled = styled(Drawer)({
@@ -63,7 +59,7 @@ const StyledTagline = styled(Typography)(({ theme }) => ({
 }));
 
 const StyledListItem = styled(ListItem)<{ active: boolean }>(
-  ({ active, theme }) => ({
+  ({ active }) => ({
     display: "flex",
     justifyContent: "left",
     backgroundColor: active ? "#FFEAD9" : "inherit",
@@ -82,7 +78,7 @@ const ListItemContainer = styled(ListItem)(() => ({
   alignItems: "start",
 }));
 
-const handleLogout = async (item: SidebarItemBottom) => {
+const handleLogout = async (item: SidebarItem) => {
   if (item.name === "Logout") {
     const { error } = await logout();
     if (error) {
@@ -93,11 +89,17 @@ const handleLogout = async (item: SidebarItemBottom) => {
   }
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
+const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems, onItemClick }) => {
+  const pathname = usePathname();
   const [activeItem, setActiveItem] = useState<string>("");
 
-  const handleItemClick = (name: string) => {
-    setActiveItem(name);
+  useEffect(() => {
+    setActiveItem(pathname);
+  }, [pathname]);
+
+  const handleItemClick = (item: SidebarItem) => {
+    setActiveItem(item.path);
+    onItemClick(item);
   };
 
   return (
@@ -113,8 +115,8 @@ const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
           {topItems.map((item, index) => (
             <Link key={index} href={item.path} passHref>
               <StyledListItem
-                active={activeItem === item.name}
-                onClick={() => handleItemClick(item.name)}
+                active={activeItem === item.path}
+                onClick={() => handleItemClick(item)}
               >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.name} />
@@ -127,9 +129,9 @@ const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems }) => {
           {bottomItems.map((item, index) => (
             <Link key={index} href={item.path} passHref>
               <StyledListItem
-                active={activeItem === item.name}
+                active={activeItem === item.path}
                 onClick={() => {
-                  handleItemClick(item.name);
+                  handleItemClick(item);
                   handleLogout(item);
                 }}
               >
