@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getRequest } from "../utils/apiUtils";
 import withAuth from "../components/WithAuth";
@@ -22,12 +22,26 @@ import {
   TableRow,
   Paper,
   IconButton,
+  SelectChangeEvent,
 } from "@mui/material";
 import styled from "styled-components";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EmptyCourseImage from "../../../public/assets/emptycourse.svg";
+
+interface Course {
+  course_id: number;
+  title: string;
+  industry: string;
+  description: string;
+  company_id: number;
+  created_at: string;
+  updated_at: string;
+  lesson_count: number;
+  assessment_count: number;
+  feedback_count: number;
+}
 
 const StyledContainer = styled(Container)`
   margin-top: 20px;
@@ -111,7 +125,7 @@ const EmptyStateButton = styled(Button)`
   color: white;
 `;
 
-const courseData = [
+const courseData: Course[] = [
   {
     course_id: 2,
     title: "Course Title",
@@ -185,8 +199,9 @@ const formatDate = (dateString: string) => {
 
 const CreateCourse: React.FC = () => {
   const router = useRouter();
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -206,6 +221,21 @@ const CreateCourse: React.FC = () => {
     fetchCourses();
   }, []);
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredCourses = useMemo(() => {
+    return courses.filter((course) => {
+      const formattedDate = formatDate(course.updated_at);
+      return (
+        Object.values(course).some((value) =>
+          value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+        ) || formattedDate.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [courses, searchQuery]);
+
   return (
     <StyledContainer>
       <HeaderContainer>
@@ -220,23 +250,17 @@ const CreateCourse: React.FC = () => {
       <SearchContainer>
         <SearchInput
           variant="outlined"
-          placeholder="Search course by title"
+          placeholder="Search courses"
+          value={searchQuery}
+          onChange={handleSearchChange}
           InputProps={{
             startAdornment: <SearchIcon />,
           }}
         />
-        <StyledFormControl variant="outlined">
-          <InputLabel>Filter By</InputLabel>
-          <Select label="Filter By">
-            <MenuItem value="date">Date</MenuItem>
-            <MenuItem value="lastAdded">Last Added</MenuItem>
-            <MenuItem value="courseName">Course Name</MenuItem>
-          </Select>
-        </StyledFormControl>
       </SearchContainer>
       {loading ? (
         <CircularProgress />
-      ) : courses.length > 0 ? (
+      ) : filteredCourses.length > 0 ? (
         <TableContainer component={Paper} sx={{ boxShadow: "none" }}>
           <Table>
             <TableHead>
@@ -250,18 +274,27 @@ const CreateCourse: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {courses.map((course, index) => (
-                <TableRow key={index}>
+              {filteredCourses.map((course, index) => (
+                <TableRow key={course.course_id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{course.title}</TableCell>
                   <TableCell>{course.lesson_count}</TableCell>
-                  <TableCell>{course.platform}</TableCell>
+                  <TableCell>{course.industry}</TableCell>
                   <TableCell>{formatDate(course.updated_at)}</TableCell>
                   <TableCell>
-                    <IconButton sx={{ color: "#4F6D7A" }} onClick={() => router.push("/create-course/course-editor")}>
+                    <IconButton
+                      sx={{ color: "#4F6D7A" }}
+                      onClick={() => {
+                        sessionStorage.setItem(
+                          "courseInfo",
+                          JSON.stringify(course)
+                        );
+                        router.push("/create-course/course-editor");
+                      }}
+                    >
                       <EditIcon />
                     </IconButton>
-                    <IconButton sx={{ color: "#4F6D7A" }} onClick={() => router.push("/create-course/edit-editor")}>
+                    <IconButton sx={{ color: "#4F6D7A" }}>
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
