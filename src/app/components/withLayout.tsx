@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { JSX } from "react";
 import Sidebar from "../components/Sidebar";
-import { AppBar, Toolbar, Typography } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Popover,
+} from "@mui/material";
 import {
   AccountCircle,
   ContentPaste,
@@ -10,6 +16,8 @@ import {
   GridView,
   Logout,
   Slideshow,
+  Notifications,
+  NotificationsNone,
 } from "@mui/icons-material";
 
 interface ActiveItem {
@@ -22,21 +30,69 @@ interface NavbarProps {
   activeItem: ActiveItem;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ activeItem }) => (
-  <AppBar
-    position="static"
-    color="transparent"
-    elevation={0}
-    sx={{ borderBottom: "1px solid #B9C5CA" }}
-  >
-    <Toolbar>
-      {activeItem.icon}
-      <Typography variant="h6" sx={{ flexGrow: 1, marginLeft: 2 }}>
-        {activeItem.name}
-      </Typography>
-    </Toolbar>
-  </AppBar>
-);
+const Navbar: React.FC<NavbarProps> = ({ activeItem }) => {
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleNotificationsClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+    setNotificationsOpen((prev) => !prev);
+  };
+
+  const handleClose = () => {
+    setNotificationsOpen(false);
+    setAnchorEl(null);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (anchorEl && !anchorEl.contains(event.target as Node)) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [anchorEl]);
+
+  return (
+    <AppBar
+      position="static"
+      color="transparent"
+      elevation={0}
+      sx={{ borderBottom: "1px solid #B9C5CA" }}
+    >
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {activeItem.icon}
+          <Typography variant="h6" sx={{ flexGrow: 1, marginLeft: 2 }}>
+            {activeItem.name}
+          </Typography>
+        </div>
+        <IconButton color="inherit" onClick={handleNotificationsClick}>
+          {notificationsOpen ? <Notifications /> : <NotificationsNone />}
+        </IconButton>
+        <Popover
+          open={notificationsOpen}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+        >
+          <Typography sx={{ p: 2 }}>Notifications</Typography>
+        </Popover>
+      </Toolbar>
+    </AppBar>
+  );
+};
 
 const defaultIcon: ActiveItem = {
   icon: <GridView />,
