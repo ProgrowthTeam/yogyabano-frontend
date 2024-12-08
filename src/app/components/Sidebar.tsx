@@ -13,11 +13,13 @@ import {
 import { styled } from "@mui/material/styles";
 import { logout } from "../services/logout";
 import { toast } from "react-toastify";
+import YogyabanoLogo from "../../../public/assets/logo.svg";
 
 interface SidebarItem {
   icon: React.ReactElement;
   name: string;
   path: string;
+  subItems?: SidebarItem[];
 }
 
 interface SidebarProps {
@@ -36,17 +38,13 @@ const DrawerStyled = styled(Drawer)({
   },
 });
 
-const YogyabanoLogo = styled("div")(({ theme }) => ({
-  height: 64,
+const StyledYogyabanoLogo = styled(YogyabanoLogo)(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   padding: theme.spacing(2),
   marginTop: "40px",
   marginBottom: "10px",
-  img: {
-    maxWidth: "256px",
-  },
 }));
 
 const StyledTagline = styled(Typography)(({ theme }) => ({
@@ -58,24 +56,34 @@ const StyledTagline = styled(Typography)(({ theme }) => ({
   marginLeft: "10px",
 }));
 
-const StyledListItem = styled(ListItem)<{ active: boolean }>(
-  ({ active }) => ({
-    display: "flex",
-    justifyContent: "left",
-    backgroundColor: active ? "#FFEAD9" : "inherit",
+const StyledListItem = styled(ListItem)<{ active: boolean }>(({ active }) => ({
+  display: "flex",
+  justifyContent: "left",
+  backgroundColor: active ? "#FFEAD9" : "inherit",
+  color: active ? "#FF7500" : "inherit",
+  "& .MuiListItemIcon-root": {
     color: active ? "#FF7500" : "inherit",
-    "& .MuiListItemIcon-root": {
-      color: active ? "#FF7500" : "inherit",
-    },
-  })
-);
+  },
+}));
 
-const ListItemContainer = styled(ListItem)(() => ({
+const StyledSubItemText = styled(ListItemText)<{ active: boolean }>(({ active }) => ({
+  color: active ? "#FF7500" : "inherit",
+}));
+
+const ListItemContainer = styled("div")(() => ({
   display: "flex",
   justifyContent: "space-between",
   flexDirection: "column",
   height: "100%",
   alignItems: "start",
+}));
+
+const SubItemContainer = styled("div")(() => ({
+  display: "flex",
+  alignItems: "left",
+  justifyContent: "left",
+  marginLeft: "75px",
+  borderLeft: "1px solid rgba(79, 109, 122, 0.2)",
 }));
 
 const handleLogout = async (item: SidebarItem) => {
@@ -89,7 +97,11 @@ const handleLogout = async (item: SidebarItem) => {
   }
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems, onItemClick }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  topItems,
+  bottomItems,
+  onItemClick,
+}) => {
   const pathname = usePathname();
   const [activeItem, setActiveItem] = useState<string>("");
 
@@ -104,24 +116,38 @@ const Sidebar: React.FC<SidebarProps> = ({ topItems, bottomItems, onItemClick })
 
   return (
     <DrawerStyled variant="permanent">
-      <YogyabanoLogo>
-        <img src="assets/logo.svg" alt="Logo" />
-      </YogyabanoLogo>
+      <StyledYogyabanoLogo />
       <StyledTagline>
         AI Assisted Skilling Platform for Frontline Workers
       </StyledTagline>
       <ListItemContainer>
         <List sx={{ width: "100%" }}>
           {topItems.map((item, index) => (
-            <Link key={index} href={item.path} passHref>
-              <StyledListItem
-                active={activeItem === item.path}
-                onClick={() => handleItemClick(item)}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.name} />
-              </StyledListItem>
-            </Link>
+            <React.Fragment key={index}>
+              <Link href={item.path} passHref>
+                <StyledListItem
+                  active={activeItem === item.path}
+                  onClick={() => handleItemClick(item)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.name} />
+                </StyledListItem>
+              </Link>
+              {item.subItems &&
+                item.subItems.map((subItem, subIndex) => (
+                  <SubItemContainer key={subIndex}>
+                    <Link href={subItem.path} passHref>
+                      <StyledSubItemText
+                        active={activeItem === subItem.path}
+                        onClick={() => handleItemClick(subItem)}
+                        sx={{ pl: 4 }}
+                      >
+                        {subItem.name}
+                      </StyledSubItemText>
+                    </Link>
+                  </SubItemContainer>
+                ))}
+            </React.Fragment>
           ))}
         </List>
         <List sx={{ width: "100%" }}>

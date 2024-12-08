@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { JSX } from "react";
 import Sidebar from "../components/Sidebar";
 import {
@@ -18,12 +18,14 @@ import {
   Slideshow,
   Notifications,
   NotificationsNone,
+  ArrowBackIosNew,
 } from "@mui/icons-material";
 
 interface ActiveItem {
   icon: JSX.Element;
   name: string;
   path: string;
+  subItems?: ActiveItem[];
 }
 
 interface NavbarProps {
@@ -33,6 +35,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ activeItem }) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const router = useRouter();
 
   const handleNotificationsClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -42,6 +45,10 @@ const Navbar: React.FC<NavbarProps> = ({ activeItem }) => {
   const handleClose = () => {
     setNotificationsOpen(false);
     setAnchorEl(null);
+  };
+
+  const handleBackClick = () => {
+    router.push("/create-course");
   };
 
   useEffect(() => {
@@ -66,6 +73,11 @@ const Navbar: React.FC<NavbarProps> = ({ activeItem }) => {
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center" }}>
+          {activeItem.path.startsWith("/create-course/") && (
+            <IconButton color="inherit" onClick={handleBackClick}>
+              <ArrowBackIosNew />
+            </IconButton>
+          )}
           {activeItem.icon}
           <Typography variant="h6" sx={{ flexGrow: 1, marginLeft: 2 }}>
             {activeItem.name}
@@ -102,7 +114,23 @@ const defaultIcon: ActiveItem = {
 
 const topItems: ActiveItem[] = [
   { icon: <GridView />, name: "Dashboard", path: "/dashboard" },
-  { icon: <Dvr />, name: "Create Course", path: "/create-course" },
+  {
+    icon: <Dvr />,
+    name: "Create Course",
+    path: "/create-course",
+    subItems: [
+      {
+        icon: <></>,
+        name: "New Course",
+        path: "/create-course/new-course",
+      },
+      {
+        icon: <></>,
+        name: "Course Editor",
+        path: "/create-course/course-editor",
+      },
+    ],
+  },
   {
     icon: <ContentPaste />,
     name: "Create Evaluation",
@@ -123,8 +151,21 @@ const withLayout = (Component: React.ComponentType) => {
 
     useEffect(() => {
       const allItems = [...topItems, ...bottomItems];
-      const currentItem =
-        allItems.find((item) => item.path === pathname) || defaultIcon;
+      const findActiveItem = (items: ActiveItem[]): ActiveItem | undefined => {
+        for (const item of items) {
+          if (item.path === pathname) {
+            return item;
+          }
+          if (item.subItems) {
+            const subItem = findActiveItem(item.subItems);
+            if (subItem) {
+              return subItem;
+            }
+          }
+        }
+        return undefined;
+      };
+      const currentItem = findActiveItem(allItems) || defaultIcon;
       setActiveItem(currentItem);
     }, [pathname]);
 

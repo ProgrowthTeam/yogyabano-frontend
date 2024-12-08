@@ -21,9 +21,12 @@ import {
   TableHead,
   TableRow,
   Paper,
+  IconButton,
 } from "@mui/material";
 import styled from "styled-components";
 import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import EmptyCourseImage from "../../../public/assets/emptycourse.svg";
 
 const StyledContainer = styled(Container)`
@@ -57,6 +60,10 @@ const SearchInput = styled(TextField)`
   width: 360px;
 `;
 
+const StyledFormControl = styled(FormControl)`
+  width: 140px;
+`;
+
 const EmptyStateContainer = styled.div`
   max-width: 512px;
   display: flex;
@@ -66,7 +73,7 @@ const EmptyStateContainer = styled.div`
 `;
 
 const EmptyStateImage = styled(EmptyCourseImage)(() => ({
-    marginBottom: "16px",
+  marginBottom: "16px",
 }));
 
 const EmptyStateHeading = styled(Typography)`
@@ -104,18 +111,92 @@ const EmptyStateButton = styled(Button)`
   color: white;
 `;
 
+const courseData = [
+  {
+    course_id: 2,
+    title: "Course Title",
+    industry: "Education",
+    description: "A sample course",
+    company_id: 1,
+    created_at: "2024-12-06T08:31:15",
+    updated_at: "2024-12-06T19:45:39",
+    lesson_count: 0,
+    assessment_count: 0,
+    feedback_count: 0,
+  },
+  {
+    course_id: 3,
+    title: "test",
+    industry: "test",
+    description: "test",
+    company_id: 1,
+    created_at: "2024-12-06T19:44:40",
+    updated_at: "2024-12-06T19:44:40",
+    lesson_count: 0,
+    assessment_count: 0,
+    feedback_count: 0,
+  },
+  {
+    course_id: 4,
+    title: "Course Title",
+    industry: "Education",
+    description: "A sample course",
+    company_id: 1,
+    created_at: "2024-12-07T05:19:21",
+    updated_at: "2024-12-07T05:19:21",
+    lesson_count: 0,
+    assessment_count: 0,
+    feedback_count: 0,
+  },
+  {
+    course_id: 5,
+    title: "Course Title",
+    industry: "Education",
+    description: "A sample course",
+    company_id: 1,
+    created_at: "2024-12-07T05:24:39",
+    updated_at: "2024-12-07T05:24:39",
+    lesson_count: 0,
+    assessment_count: 0,
+    feedback_count: 0,
+  },
+  {
+    course_id: 6,
+    title: "Course Title",
+    industry: "Education",
+    description: "A sample course",
+    company_id: 1,
+    created_at: "2024-12-07T06:42:40",
+    updated_at: "2024-12-07T06:42:40",
+    lesson_count: 0,
+    assessment_count: 0,
+    feedback_count: 0,
+  },
+];
+
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+  return new Date(dateString).toLocaleDateString("en-US", options);
+};
+
 const CreateCourse: React.FC = () => {
-    const router = useRouter();
+  const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await getRequest("/api/courses");
+        const response = await getRequest("/allCourses");
         const data = response.data;
-        setCourses(data);
+        // setCourses(data);
+        setCourses(courseData);
       } catch (error) {
+        setCourses(courseData);
         console.error("Error fetching courses:", error);
       } finally {
         setLoading(false);
@@ -144,19 +225,19 @@ const CreateCourse: React.FC = () => {
             startAdornment: <SearchIcon />,
           }}
         />
-        <FormControl variant="outlined">
+        <StyledFormControl variant="outlined">
           <InputLabel>Filter By</InputLabel>
           <Select label="Filter By">
             <MenuItem value="date">Date</MenuItem>
             <MenuItem value="lastAdded">Last Added</MenuItem>
             <MenuItem value="courseName">Course Name</MenuItem>
           </Select>
-        </FormControl>
+        </StyledFormControl>
       </SearchContainer>
       {loading ? (
         <CircularProgress />
       ) : courses.length > 0 ? (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ boxShadow: "none" }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -173,13 +254,16 @@ const CreateCourse: React.FC = () => {
                 <TableRow key={index}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{course.title}</TableCell>
-                  <TableCell>{course.videos}</TableCell>
+                  <TableCell>{course.lesson_count}</TableCell>
                   <TableCell>{course.platform}</TableCell>
-                  <TableCell>{course.lastUpdated}</TableCell>
+                  <TableCell>{formatDate(course.updated_at)}</TableCell>
                   <TableCell>
-                    <Button variant="contained" color="primary">
-                      Edit
-                    </Button>
+                    <IconButton sx={{ color: "#4F6D7A" }} onClick={() => router.push("/create-course/course-editor")}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton sx={{ color: "#4F6D7A" }} onClick={() => router.push("/create-course/edit-editor")}>
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
