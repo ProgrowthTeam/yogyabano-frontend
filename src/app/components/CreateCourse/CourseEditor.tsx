@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import withAuth from "../../components/WithAuth";
+import { postRequest } from "../../utils/apiUtils";
 import { styled } from "@mui/material/styles";
-import { Box } from "@mui/material";
+import { Box, IconButton, TextField } from "@mui/material";
 import SampleSvg from "../../../../public/assets/course_editor.svg";
 import LessonsIcon from "@mui/icons-material/Book";
 import AssessmentIcon from "@mui/icons-material/Assignment";
 import FeedbackIcon from "@mui/icons-material/Feedback";
+import BorderColor from "@mui/icons-material/BorderColor";
 
 interface Course {
   id: string;
@@ -15,8 +17,8 @@ interface Course {
   description: string;
   industry: string;
   lesson_count: number;
-    assessment_count: number;
-    feedback_count: number;
+  assessment_count: number;
+  feedback_count: number;
 }
 
 const StyledBox = styled(Box)({
@@ -62,6 +64,9 @@ const Title = styled(Box)({
   fontWeight: 600,
   lineHeight: "normal",
   marginBottom: "8px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
 });
 
 const Industry = styled(Box)({
@@ -105,19 +110,61 @@ const Tab = styled(Box)<{ active: boolean }>(({ active }) => ({
   fontWeight: 500,
   borderBottom: active ? "1px solid #FF7500" : "none",
   background: active ? "#FFEAD9" : "transparent",
-  marginRight: "20px"
+  marginRight: "20px",
 }));
 
 const CourseEditor: React.FC = () => {
   const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("lessons");
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>("");
+  const [industry, setIndustry] = useState<string>("");
 
   useEffect(() => {
     const courseData = sessionStorage.getItem("courseInfo");
     if (courseData) {
-      setCourse(JSON.parse(courseData));
+      const parsedCourse = JSON.parse(courseData);
+      setCourse(parsedCourse);
+      setTitle(parsedCourse.title);
+      setIndustry(parsedCourse.industry);
     }
   }, []);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(event.target.value);
+  };
+
+  const handleIndustryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIndustry(event.target.value);
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    const sessionUser = sessionStorage.getItem("user");
+    try {
+      if (!sessionUser) {
+        throw new Error("User session not found");
+      }
+      const user = JSON.parse(sessionUser);
+      const response = await postRequest("/courses", {
+        title: title,
+        industry: industry,
+        course: course ? course.id : "",
+        company_id: user.user.user_metadata.companyId,
+      });
+      setIsEditing(false);
+      console.log("Course updated successfully:", response.data);
+    } catch (error) {
+      console.error("Error updating course:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -128,13 +175,43 @@ const CourseEditor: React.FC = () => {
             {course && (
               <>
                 <Title>
-                  {course?.title}
+                  {isEditing ? (
+                    <TextField
+                      value={title}
+                      onChange={handleTitleChange}
+                      onBlur={handleSave}
+                      autoFocus
+                      variant="standard"
+                      sx={{ width: "500px" }}
+                    />
+                  ) : (
+                    <>
+                      {course.title}
+                      <IconButton onClick={handleEdit}>
+                        <BorderColor />
+                      </IconButton>
+                    </>
+                  )}
                 </Title>
-                <Industry>{course?.industry}</Industry>
-                <Stats>Lessons {course?.lesson_count}, Assessment {course?.assessment_count}, Feedback {course?.feedback_count}</Stats>
-                <Description>
-                  {course?.description}
-                </Description>
+                <Industry>
+                  {isEditing ? (
+                    <TextField
+                      value={industry}
+                      onChange={handleIndustryChange}
+                      onBlur={handleSave}
+                      autoFocus
+                      variant="standard"
+                      sx={{ width: "500px" }}
+                    />
+                  ) : (
+                    <>{course.industry}</>
+                  )}
+                </Industry>
+                <Stats>
+                  Lessons {course.lesson_count}, Assessment{" "}
+                  {course.assessment_count}, Feedback {course.feedback_count}
+                </Stats>
+                <Description>{course.description}</Description>
               </>
             )}
           </ContentBox>

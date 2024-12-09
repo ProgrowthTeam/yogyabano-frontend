@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { Snackbar, Alert } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { postRequest } from "../utils/apiUtils";
 import withAuth from "../components/WithAuth";
@@ -130,26 +131,31 @@ const CreateCourse: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
+
+  const fetchCourses = async () => {
+    const sessionUser = sessionStorage.getItem("user");
+    try {
+      if (!sessionUser) {
+        throw new Error("User session not found");
+      }
+      const user = JSON.parse(sessionUser);
+      const response = await postRequest("/allCourses", {
+        company_id: user.user.user_metadata.companyId,
+      });
+      setCourses(response.data);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      const sessionUser = sessionStorage.getItem("user");
-      try {
-        if (!sessionUser) {
-          throw new Error("User session not found");
-        }
-        const user = JSON.parse(sessionUser);
-        const response = await postRequest("/allCourses", {
-          company_id: user.user.user_metadata.companyId,
-        });
-        setCourses(response.data);
-      } catch (error) {
-        console.error("Error fetching courses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCourses();
   }, []);
 
@@ -169,6 +175,32 @@ const CreateCourse: React.FC = () => {
         })
       : [];
   }, [courses, searchQuery]);
+
+  const handleDeleteCourse = async (course: Course) => {
+    console.log("Deleting course:", course);
+    try {
+      await postRequest("/deleteCourses", {
+        course_id: course.course_id,
+        company_id: course.company_id,
+      });
+      setSnackbar({
+        open: true,
+        message: "Course deleted successfully",
+        severity: "success",
+      });
+      await fetchCourses();
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: "Error deleting course",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ open: false, message: "", severity: "success" });
+  };
 
   return (
     <StyledContainer>
@@ -228,7 +260,10 @@ const CreateCourse: React.FC = () => {
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton sx={{ color: "#4F6D7A" }}>
+                    <IconButton
+                      sx={{ color: "#4F6D7A" }}
+                      onClick={() => handleDeleteCourse(course)}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
@@ -255,6 +290,20 @@ const CreateCourse: React.FC = () => {
           </EmptyStateButton>
         </EmptyStateContainer>
       )}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </StyledContainer>
   );
 };
