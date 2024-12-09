@@ -4,12 +4,14 @@ import React, { useState, useEffect } from "react";
 import withAuth from "../../components/WithAuth";
 import { postRequest } from "../../utils/apiUtils";
 import { styled } from "@mui/material/styles";
-import { Box, IconButton, TextField } from "@mui/material";
+import { Box, IconButton, TextField, Snackbar, Alert } from "@mui/material";
+import { useRouter } from "next/navigation";
 import SampleSvg from "../../../../public/assets/course_editor.svg";
 import LessonsIcon from "@mui/icons-material/Book";
 import AssessmentIcon from "@mui/icons-material/Assignment";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import BorderColor from "@mui/icons-material/BorderColor";
+import SaveIcon from "@mui/icons-material/Save";
 
 interface Course {
   id: string;
@@ -120,6 +122,13 @@ const CourseEditor: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
   const [industry, setIndustry] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+  const router = useRouter();
 
   useEffect(() => {
     const courseData = sessionStorage.getItem("courseInfo");
@@ -128,6 +137,7 @@ const CourseEditor: React.FC = () => {
       setCourse(parsedCourse);
       setTitle(parsedCourse.title);
       setIndustry(parsedCourse.industry);
+      setDescription(parsedCourse.description);
     }
   }, []);
 
@@ -143,27 +153,46 @@ const CourseEditor: React.FC = () => {
     setIndustry(event.target.value);
   };
 
+  const handleDescriptionChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setDescription(event.target.value);
+  };
+
   const handleSave = async () => {
     setLoading(true);
-    const sessionUser = sessionStorage.getItem("user");
+    const courseInfo = sessionStorage.getItem("courseInfo");
     try {
-      if (!sessionUser) {
+      if (!courseInfo) {
         throw new Error("User session not found");
       }
-      const user = JSON.parse(sessionUser);
-      const response = await postRequest("/courses", {
+      const course = JSON.parse(courseInfo);
+      const response = await postRequest("/updateCourses", {
         title: title,
         industry: industry,
-        course: course ? course.id : "",
-        company_id: user.user.user_metadata.companyId,
+        description: description,
+        course_id: course?.course_id,
+        // company_id: user.user.user_metadata.companyId,
       });
       setIsEditing(false);
-      console.log("Course updated successfully:", response.data);
+      setSnackbarMessage("Course updated successfully");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      setTimeout(() => {
+        router.push("/create-course");
+      }, 2000);
     } catch (error) {
+      setSnackbarMessage("Error updating course");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
       console.error("Error updating course:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -179,7 +208,6 @@ const CourseEditor: React.FC = () => {
                     <TextField
                       value={title}
                       onChange={handleTitleChange}
-                      onBlur={handleSave}
                       autoFocus
                       variant="standard"
                       sx={{ width: "500px" }}
@@ -198,7 +226,6 @@ const CourseEditor: React.FC = () => {
                     <TextField
                       value={industry}
                       onChange={handleIndustryChange}
-                      onBlur={handleSave}
                       autoFocus
                       variant="standard"
                       sx={{ width: "500px" }}
@@ -211,7 +238,24 @@ const CourseEditor: React.FC = () => {
                   Lessons {course.lesson_count}, Assessment{" "}
                   {course.assessment_count}, Feedback {course.feedback_count}
                 </Stats>
-                <Description>{course.description}</Description>
+                <Description>
+                  {isEditing ? (
+                    <TextField
+                      value={description}
+                      onChange={handleDescriptionChange}
+                      autoFocus
+                      variant="standard"
+                      sx={{ width: "500px" }}
+                    />
+                  ) : (
+                    <>{course.description}</>
+                  )}
+                </Description>
+                {isEditing && (
+                  <IconButton onClick={handleSave}>
+                    <SaveIcon />
+                  </IconButton>
+                )}
               </>
             )}
           </ContentBox>
@@ -245,6 +289,16 @@ const CourseEditor: React.FC = () => {
         {activeTab === "assessment" && <div>Assessment content goes here</div>}
         {activeTab === "feedback" && <div>Feedback content goes here</div>}
       </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

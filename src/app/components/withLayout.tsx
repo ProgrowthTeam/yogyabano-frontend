@@ -124,11 +124,6 @@ const topItems: ActiveItem[] = [
         name: "New Course",
         path: "/create-course/new-course",
       },
-      {
-        icon: <></>,
-        name: "Course Editor",
-        path: "/create-course/course-editor",
-      },
     ],
   },
   {

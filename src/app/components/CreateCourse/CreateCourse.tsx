@@ -11,6 +11,8 @@ import {
   Button,
   Container,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -66,6 +68,12 @@ const SectionTypography = styled(Typography)({
 const CreateCourse: React.FC = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
+
   const {
     register,
     handleSubmit,
@@ -84,13 +92,27 @@ const CreateCourse: React.FC = () => {
         ...data,
         company_id: user.user.user_metadata.companyId,
       });
-      router.push("/create-course");
-      console.log("Course created successfully:", response.data);
+      setSnackbar({
+        open: true,
+        message: "Course created successfully",
+        severity: "success",
+      });
+      setTimeout(() => {
+        router.push("/create-course");
+      }, 2000); // Delay redirection by 3 seconds
     } catch (error) {
-      console.error("Error creating course:", error);
+      setSnackbar({
+        open: true,
+        message: "Error creating course",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ open: false, message: "", severity: "success" });
   };
 
   return (
@@ -149,6 +171,20 @@ const CreateCourse: React.FC = () => {
           {loading ? <CircularProgress size={24} /> : "Create Course"}
         </StyledButton>
       </form>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </StyledContainer>
   );
 };

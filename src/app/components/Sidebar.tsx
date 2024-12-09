@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Box,
   Drawer,
   Divider,
   List,
@@ -13,7 +14,8 @@ import {
 import { styled } from "@mui/material/styles";
 import { logout } from "../services/logout";
 import { toast } from "react-toastify";
-import YogyabanoLogo from "../../../public/assets/logo.svg";
+import Image from "next/image";
+import YogyabanoLogo from "../../../public/assets/logo.png"; // Updated to PNG
 
 interface SidebarItem {
   icon: React.ReactElement;
@@ -38,13 +40,8 @@ const DrawerStyled = styled(Drawer)({
   },
 });
 
-const StyledYogyabanoLogo = styled(YogyabanoLogo)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: theme.spacing(2),
-  marginTop: "40px",
-  marginBottom: "10px",
+const StyledYogyabanoLogo = styled(Box)(() => ({
+  padding: "40px 10px 0 10px",
 }));
 
 const StyledTagline = styled(Typography)(({ theme }) => ({
@@ -66,9 +63,11 @@ const StyledListItem = styled(ListItem)<{ active: boolean }>(({ active }) => ({
   },
 }));
 
-const StyledSubItemText = styled(ListItemText)<{ active: boolean }>(({ active }) => ({
-  color: active ? "#FF7500" : "inherit",
-}));
+const StyledSubItemText = styled(ListItemText)<{ active: boolean }>(
+  ({ active }) => ({
+    color: active ? "#FF7500" : "inherit",
+  })
+);
 
 const ListItemContainer = styled("div")(() => ({
   display: "flex",
@@ -116,7 +115,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <DrawerStyled variant="permanent">
-      <StyledYogyabanoLogo />
+      <StyledYogyabanoLogo>
+        {" "}
+        <Image
+          src={YogyabanoLogo}
+          alt="Yogyabano Logo"
+          width={256}
+          height={38}
+        />
+      </StyledYogyabanoLogo>
       <StyledTagline>
         AI Assisted Skilling Platform for Frontline Workers
       </StyledTagline>
