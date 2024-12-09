@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify"; // Assuming you have react-toastify installed
+import { toast } from "react-toastify";
 import withLayout from "./withLayout";
 
 const withAuth = (WrappedComponent: React.ComponentType) => {

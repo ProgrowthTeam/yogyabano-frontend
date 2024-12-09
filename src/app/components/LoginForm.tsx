@@ -92,25 +92,6 @@ const StyledTagline = styled(Typography)(({ theme }) => ({
   marginBottom: "40px",
 }));
 
-const StyledTermsandConditions = styled(Typography)(({ theme }) => ({
-  color: theme.palette.custom.blueBayoux,
-  fontWeight: theme.typography.fontWeightMedium,
-  fontSize: 14,
-  marginBottom: 10,
-  justifyContent: "center",
-  display: "flex",
-  cursor: "pointer",
-}));
-
-const StyledSignUp = styled(Typography)(({ theme }) => ({
-  color: theme.palette.custom.blueBayoux,
-  fontWeight: theme.typography.fontWeightMedium,
-  fontSize: 14,
-  marginBottom: 10,
-  justifyContent: "center",
-  display: "flex",
-}));
-
 const StyledLink = styled(Link)(() => ({
   textDecoration: "underline",
 }));
@@ -130,7 +111,6 @@ export default function LoginForm() {
   const [error, setError] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
 
-  const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const handleSubmit = async (event: React.FormEvent) => {

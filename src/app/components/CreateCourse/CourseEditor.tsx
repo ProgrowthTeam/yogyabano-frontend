@@ -4,16 +4,19 @@ import React, { useState, useEffect } from "react";
 import withAuth from "../../components/WithAuth";
 import { styled } from "@mui/material/styles";
 import { Box } from "@mui/material";
-import SampleSvg from "../../../../public/assets/course_editor.svg"; // Adjust the path to your SVG file
-import LessonsIcon from "@mui/icons-material/Book"; // Example icon, adjust as needed
-import AssessmentIcon from "@mui/icons-material/Assignment"; // Example icon, adjust as needed
-import FeedbackIcon from "@mui/icons-material/Feedback"; // Example icon, adjust as needed
+import SampleSvg from "../../../../public/assets/course_editor.svg";
+import LessonsIcon from "@mui/icons-material/Book";
+import AssessmentIcon from "@mui/icons-material/Assignment";
+import FeedbackIcon from "@mui/icons-material/Feedback";
 
 interface Course {
   id: string;
   title: string;
   description: string;
   industry: string;
+  lesson_count: number;
+    assessment_count: number;
+    feedback_count: number;
 }
 
 const StyledBox = styled(Box)({
@@ -125,14 +128,12 @@ const CourseEditor: React.FC = () => {
             {course && (
               <>
                 <Title>
-                  {course.title ? "Introduction to V-Mart Ethics" : ""}
+                  {course?.title}
                 </Title>
-                <Industry>{course.industry ? "Retail Store" : ""}</Industry>
-                <Stats>Lessons 0, Assessment 0, Feedback 0</Stats>
+                <Industry>{course?.industry}</Industry>
+                <Stats>Lessons {course?.lesson_count}, Assessment {course?.assessment_count}, Feedback {course?.feedback_count}</Stats>
                 <Description>
-                  {course.description
-                    ? "This course focuses on the Ethics of V-Mart, exploring the principles that guide the company's operations and decision-making processes. It provides an introduction to V-Mart's ethical policies, emphasizing their commitment to integrity, respect for individuals, and social responsibility."
-                    : ""}
+                  {course?.description}
                 </Description>
               </>
             )}

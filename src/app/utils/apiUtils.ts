@@ -1,12 +1,14 @@
 import axios, { AxiosRequestConfig } from "axios";
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-//   Authorization: `Bearer ${localStorage.getItem("token")}`,
-"x-api-key": process.env.NEXT_PUBLIC_APIKEY,
-});
+const isClient = typeof window !== "undefined";
+const sessionUser = isClient ? sessionStorage.getItem("user") : null;
+const getHeaders = () => {
+    return {
+      "Content-Type": "application/json",
+      "x-api-key": sessionUser ? JSON.parse(sessionUser).user.user_metadata.apiKey : "",
+    };
+  };
 
 const postRequest = async (endpoint: string, data: any) => {
   const config: AxiosRequestConfig = {

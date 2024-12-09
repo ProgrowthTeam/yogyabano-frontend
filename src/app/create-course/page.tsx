@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getRequest } from "../utils/apiUtils";
+import { postRequest } from "../utils/apiUtils";
 import withAuth from "../components/WithAuth";
 import {
   CircularProgress,
@@ -10,10 +10,6 @@ import {
   Container,
   Typography,
   TextField,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
   Table,
   TableBody,
   TableCell,
@@ -22,7 +18,6 @@ import {
   TableRow,
   Paper,
   IconButton,
-  SelectChangeEvent,
 } from "@mui/material";
 import styled from "styled-components";
 import SearchIcon from "@mui/icons-material/Search";
@@ -74,10 +69,6 @@ const SearchInput = styled(TextField)`
   width: 360px;
 `;
 
-const StyledFormControl = styled(FormControl)`
-  width: 140px;
-`;
-
 const EmptyStateContainer = styled.div`
   max-width: 512px;
   display: flex;
@@ -125,69 +116,6 @@ const EmptyStateButton = styled(Button)`
   color: white;
 `;
 
-const courseData: Course[] = [
-  {
-    course_id: 2,
-    title: "Course Title",
-    industry: "Education",
-    description: "A sample course",
-    company_id: 1,
-    created_at: "2024-12-06T08:31:15",
-    updated_at: "2024-12-06T19:45:39",
-    lesson_count: 0,
-    assessment_count: 0,
-    feedback_count: 0,
-  },
-  {
-    course_id: 3,
-    title: "test",
-    industry: "test",
-    description: "test",
-    company_id: 1,
-    created_at: "2024-12-06T19:44:40",
-    updated_at: "2024-12-06T19:44:40",
-    lesson_count: 0,
-    assessment_count: 0,
-    feedback_count: 0,
-  },
-  {
-    course_id: 4,
-    title: "Course Title",
-    industry: "Education",
-    description: "A sample course",
-    company_id: 1,
-    created_at: "2024-12-07T05:19:21",
-    updated_at: "2024-12-07T05:19:21",
-    lesson_count: 0,
-    assessment_count: 0,
-    feedback_count: 0,
-  },
-  {
-    course_id: 5,
-    title: "Course Title",
-    industry: "Education",
-    description: "A sample course",
-    company_id: 1,
-    created_at: "2024-12-07T05:24:39",
-    updated_at: "2024-12-07T05:24:39",
-    lesson_count: 0,
-    assessment_count: 0,
-    feedback_count: 0,
-  },
-  {
-    course_id: 6,
-    title: "Course Title",
-    industry: "Education",
-    description: "A sample course",
-    company_id: 1,
-    created_at: "2024-12-07T06:42:40",
-    updated_at: "2024-12-07T06:42:40",
-    lesson_count: 0,
-    assessment_count: 0,
-    feedback_count: 0,
-  },
-];
-
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -205,13 +133,17 @@ const CreateCourse: React.FC = () => {
 
   useEffect(() => {
     const fetchCourses = async () => {
+      const sessionUser = sessionStorage.getItem("user");
       try {
-        const response = await getRequest("/allCourses");
-        const data = response.data;
-        // setCourses(data);
-        setCourses(courseData);
+        if (!sessionUser) {
+          throw new Error("User session not found");
+        }
+        const user = JSON.parse(sessionUser);
+        const response = await postRequest("/allCourses", {
+          company_id: user.user.user_metadata.companyId,
+        });
+        setCourses(response.data);
       } catch (error) {
-        setCourses(courseData);
         console.error("Error fetching courses:", error);
       } finally {
         setLoading(false);
@@ -226,14 +158,16 @@ const CreateCourse: React.FC = () => {
   };
 
   const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const formattedDate = formatDate(course.updated_at);
-      return (
-        Object.values(course).some((value) =>
-          value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-        ) || formattedDate.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    });
+    return Array.isArray(courses)
+      ? courses.filter((course) => {
+          const formattedDate = formatDate(course.updated_at);
+          return (
+            Object.values(course).some((value) =>
+              value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+            ) || formattedDate.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        })
+      : [];
   }, [courses, searchQuery]);
 
   return (

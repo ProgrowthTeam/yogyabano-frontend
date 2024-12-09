@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logout } from "../../services/logout";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
 
   try {
     const { error } = await logout();

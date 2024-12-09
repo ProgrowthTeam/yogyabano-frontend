@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { postRequest } from "../../utils/apiUtils";
 import withAuth from "../../components/WithAuth";
@@ -63,6 +64,7 @@ const SectionTypography = styled(Typography)({
 });
 
 const CreateCourse: React.FC = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -72,11 +74,17 @@ const CreateCourse: React.FC = () => {
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setLoading(true);
+    const sessionUser = sessionStorage.getItem("user");
     try {
+      if (!sessionUser) {
+        throw new Error("User session not found");
+      }
+      const user = JSON.parse(sessionUser);
       const response = await postRequest("/courses", {
         ...data,
-        company_id: 1,
+        company_id: user.user.user_metadata.companyId,
       });
+      router.push("/create-course");
       console.log("Course created successfully:", response.data);
     } catch (error) {
       console.error("Error creating course:", error);

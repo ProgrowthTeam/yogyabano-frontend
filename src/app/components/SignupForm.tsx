@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Link from "next/link";
-import { v4 as uuidv4 } from "uuid";
 import {
   TextField,
   Button,
@@ -124,7 +123,7 @@ export default function SignupForm() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [apiKey, setApiKey] = useState<string>("");
-  const [companyName, setCompanyName] = useState<string>("");
+  const [companyId, setCompanyId] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
@@ -139,8 +138,7 @@ export default function SignupForm() {
 
     const options = {
       apiKey: apiKey,
-      companyId: uuidv4(),
-      companyName: companyName,
+      companyId: companyId,
     };
     const response = await fetch("/api/signup", {
       method: "POST",
@@ -209,11 +207,11 @@ export default function SignupForm() {
           margin="normal"
         />
         <TextField
-          label="Company Name"
+          label="Company ID"
           type="name"
-          value={companyName}
+          value={companyId}
           sx={{ maxWidth: 360 }}
-          onChange={(e) => setCompanyName(e.target.value)}
+          onChange={(e) => setCompanyId(Number(e.target.value))}
           required
           fullWidth
           margin="normal"
