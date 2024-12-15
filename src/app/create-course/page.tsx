@@ -24,7 +24,7 @@ import styled from "styled-components";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EmptyCourseImage from "../../../public/assets/emptycourse.svg";
+import EmptyState from "../components/CreateCourse/EmptyState";
 
 interface Course {
   course_id: number;
@@ -70,40 +70,14 @@ const SearchInput = styled(TextField)`
   width: 360px;
 `;
 
-const EmptyStateContainer = styled.div`
-  max-width: 512px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: auto;
-`;
-
-const EmptyStateImage = styled(EmptyCourseImage)(() => ({
-  marginBottom: "16px",
-}));
-
-const EmptyStateHeading = styled(Typography)`
-  color: #4f6d7a;
-  text-align: center;
-  font-family: Montserrat;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 24px; /* 150% */
-  margin-bottom: 8px;
-`;
-
-const EmptyStateDescription = styled(Typography)`
-  color: #afafaf;
-  text-align: center;
-  font-family: Montserrat;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 20px; /* 142.857% */
-  margin-bottom: 16px;
-  max-width: 302px;
-`;
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+  return new Date(dateString).toLocaleDateString("en-US", options);
+};
 
 const EmptyStateButton = styled(Button)`
   display: flex;
@@ -116,15 +90,6 @@ const EmptyStateButton = styled(Button)`
   background: #ff7500;
   color: white;
 `;
-
-const formatDate = (dateString: string) => {
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  };
-  return new Date(dateString).toLocaleDateString("en-US", options);
-};
 
 const CreateCourse: React.FC = () => {
   const router = useRouter();
@@ -273,28 +238,13 @@ const CreateCourse: React.FC = () => {
           </Table>
         </TableContainer>
       ) : (
-        <EmptyStateContainer>
-          <EmptyStateImage
-            src="/public/assets/emptycourse.svg"
-            alt="No courses"
-          />
-          <EmptyStateHeading>No course added here</EmptyStateHeading>
-          <EmptyStateDescription>
-            To add or create a new course click on the “+ New Course”
-          </EmptyStateDescription>
-          <EmptyStateButton
-            variant="contained"
-            onClick={() => router.push("/create-course/new-course")}
-          >
-            + New Course
-          </EmptyStateButton>
-        </EmptyStateContainer>
+        <EmptyState />
       )}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
           onClose={handleCloseSnackbar}

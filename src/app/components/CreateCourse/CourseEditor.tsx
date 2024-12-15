@@ -12,6 +12,9 @@ import AssessmentIcon from "@mui/icons-material/Assignment";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 import BorderColor from "@mui/icons-material/BorderColor";
 import SaveIcon from "@mui/icons-material/Save";
+import LessonsContent from "./LessonsContent";
+import AssessmentContent from "./AssessmentContent";
+import FeedbackContent from "./FeedbackContent";
 
 interface Course {
   id: string;
@@ -284,10 +287,10 @@ const CourseEditor: React.FC = () => {
           Feedback
         </Tab>
       </StyledNav>
-      <Box>
-        {activeTab === "lessons" && <div>Lessons content goes here</div>}
-        {activeTab === "assessment" && <div>Assessment content goes here</div>}
-        {activeTab === "feedback" && <div>Feedback content goes here</div>}
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "150px"}}>
+        {activeTab === "lessons" && <LessonsContent />}
+        {activeTab === "assessment" && <AssessmentContent />}
+        {activeTab === "feedback" && <FeedbackContent />}
       </Box>
       <Snackbar
         open={snackbarOpen}
