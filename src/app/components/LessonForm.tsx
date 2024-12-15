@@ -72,9 +72,10 @@ const StyledAddButton = styled(MuiButton)(({ theme }) => ({
 
 interface LessonFormProps {
   toggleDrawer: (open: boolean) => () => void;
+  fetchLessons: () => void;
 }
 
-const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
+const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) => {
   const { control, handleSubmit, setError } = useForm();
   const [file, setFile] = useState<File | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -126,7 +127,7 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
       const fileName = uploadResult.Key;
 
       const response = await postRequest("/lessons", {
-        course_id: 16,
+        course_id: sessionStorage.getItem("courseInfo") ? JSON.parse(sessionStorage.getItem("courseInfo")!).course_id : null,
         title: data.lessonTitle,
         role: data.role,
         topic: data.topic,
@@ -135,9 +136,11 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
         file_name: fileName,
       });
 
-      if (response) {
-        setSnackbarMessage("Submit API call successful");
+      if (response && response.data.lesson_id) {
+        toggleDrawer(false)
+        setSnackbarMessage(response.data.message || "Submit API call successful");
         setSnackbarSeverity("success");
+        fetchLessons()
       } else {
         setSnackbarMessage("Submit API call failed");
         setSnackbarSeverity("error");

@@ -8,17 +8,19 @@ interface CreateNewContentProps {
   isDrawerOpen: boolean;
   toggleDrawer: (open: boolean) => () => void;
   contentType: { title: string; type: string };
+  fetchLessons: () => void;
 }
 
 const CreateNewContent: React.FC<CreateNewContentProps> = ({
   isDrawerOpen,
   toggleDrawer,
   contentType,
+  fetchLessons,
 }) => {
   const renderForm = () => {
     switch (contentType.type) {
       case "lesson":
-        return <LessonForm toggleDrawer={toggleDrawer} />;
+        return <LessonForm toggleDrawer={toggleDrawer} fetchLessons={fetchLessons} />;
       case "assessment":
         return <AssessmentForm toggleDrawer={toggleDrawer} />;
       case "feedback":

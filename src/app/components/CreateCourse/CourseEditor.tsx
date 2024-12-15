@@ -287,7 +287,15 @@ const CourseEditor: React.FC = () => {
           Feedback
         </Tab>
       </StyledNav>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "150px"}}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          // padding: "150px",
+          width: "100%",
+        }}
+      >
         {activeTab === "lessons" && <LessonsContent />}
         {activeTab === "assessment" && <AssessmentContent />}
         {activeTab === "feedback" && <FeedbackContent />}
