@@ -9,6 +9,7 @@ import {
   Snackbar,
   Alert,
   Typography,
+  CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AWS from "aws-sdk";
@@ -81,6 +82,7 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
     "success"
   );
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: any) => {
     if (file && file.size > 25 * 1024 * 1024) {
@@ -91,6 +93,8 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
       return;
     }
 
+    setLoading(true);
+
     const s3 = new AWS.S3({
       accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
@@ -100,11 +104,13 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
     const bucketName = process.env.NEXT_PUBLIC_S3_BUCKET_NAME;
     if (!bucketName) {
       console.error("S3 bucket name is not defined");
+      setLoading(false);
       return;
     }
 
     if (!file) {
       console.error("File is not selected");
+      setLoading(false);
       return;
     }
 
@@ -141,6 +147,7 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
       setSnackbarMessage("Error uploading file");
       setSnackbarSeverity("error");
     } finally {
+      setLoading(false);
       setSnackbarOpen(true);
     }
   };
@@ -252,8 +259,13 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer }) => {
         >
           Back
         </StyledBackButton>
-        <StyledAddButton type="submit" variant="contained" color="primary">
-          Add
+        <StyledAddButton
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} /> : "Add"}
         </StyledAddButton>
       </ButtonContainer>
       <Snackbar
