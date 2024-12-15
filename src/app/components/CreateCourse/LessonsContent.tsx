@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { postRequest } from "../../utils/apiUtils";
 import { Box, CircularProgress, Snackbar, Alert } from "@mui/material";
 import EmptyState from "./EmptyState";
+import CreateNewContent from "../CreateNewContent";
+import { title } from "process";
 
 interface Lesson {
   id: string;
@@ -9,9 +11,15 @@ interface Lesson {
   description: string;
 }
 
+const contentType = {
+  type: "lesson",
+  title: "New Lesson",
+};
+
 const LessonsContent: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
@@ -47,6 +55,10 @@ const LessonsContent: React.FC = () => {
     setSnackbarOpen(false);
   };
 
+  const toggleDrawer = (open: boolean) => () => {
+    setIsDrawerOpen(open);
+  };
+
   return (
     <Box>
       {loading ? (
@@ -59,8 +71,15 @@ const LessonsContent: React.FC = () => {
           ))}
         </div>
       ) : (
-        <EmptyState componentProps={{ title: "lesson", path: "/course/new-lesson" }} />
+        <Box onClick={toggleDrawer(true)}>
+          <EmptyState componentProps={{ title: "lesson", path: "" }} />
+        </Box>
       )}
+      <CreateNewContent
+        isDrawerOpen={isDrawerOpen}
+        toggleDrawer={toggleDrawer}
+        contentType={contentType}
+      />
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}

@@ -238,7 +238,7 @@ const CreateCourse: React.FC = () => {
           </Table>
         </TableContainer>
       ) : (
-        <EmptyState />
+        <EmptyState componentProps={{ title: "course", path: "/create-course/new-course" }} />
       )}
       <Snackbar
         open={snackbar.open}
