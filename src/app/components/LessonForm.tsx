@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   TextField,
@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AWS from "aws-sdk";
-import { postRequest } from "../utils/apiUtils";
+import { postRequest, putRequest } from "../utils/apiUtils";
 
 const Title = styled(Typography)({
   color: "#4F6D7A",
@@ -73,10 +73,40 @@ const StyledAddButton = styled(MuiButton)(({ theme }) => ({
 interface LessonFormProps {
   toggleDrawer: (open: boolean) => () => void;
   fetchLessons: () => void;
+  isUpdateFlow: boolean;
 }
 
-const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) => {
-  const { control, handleSubmit, setError } = useForm();
+const LessonForm: React.FC<LessonFormProps> = ({
+  toggleDrawer,
+  fetchLessons,
+  isUpdateFlow,
+}) => {
+  const lessonInfo = isUpdateFlow
+    ? JSON.parse(sessionStorage.getItem("lessonInfo") || "{}")
+    : {};
+
+  const { control, handleSubmit, setError, reset } = useForm({
+    defaultValues: {
+      lessonTitle: lessonInfo.title || "",
+      role: lessonInfo.role || "",
+      topic: lessonInfo.topic || "",
+      industry: lessonInfo.industry || "",
+      convertInto: lessonInfo.convertInto || "text",
+    },
+  });
+
+  useEffect(() => {
+    if (isUpdateFlow && lessonInfo) {
+      reset({
+        lessonTitle: lessonInfo.title,
+        role: lessonInfo.role,
+        topic: lessonInfo.topic,
+        industry: lessonInfo.industry,
+        convertInto: lessonInfo.convertInto,
+      });
+    }
+  }, [isUpdateFlow]);
+
   const [file, setFile] = useState<File | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -86,72 +116,109 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: any) => {
-    if (file && file.size > 25 * 1024 * 1024) {
-      setError("file", {
-        type: "manual",
-        message: "File size should be less than 25MB",
-      });
-      return;
-    }
+    if (isUpdateFlow) {
+      try {
+        const response = await putRequest("/lessons", {
+          lesson_id: sessionStorage.getItem("lessonInfo")
+            ? JSON.parse(sessionStorage.getItem("lessonInfo")!).lesson_id
+            : null,
+          title: data.lessonTitle,
+          role: data.role,
+          topic: data.topic,
+          industry: data.industry,
+          convert_type: data.convertInto,
+        //   file_name: JSON.parse(sessionStorage.getItem("lessonInfo")!).pdf,
+        });
 
-    setLoading(true);
-
-    const s3 = new AWS.S3({
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
-      region: process.env.NEXT_PUBLIC_AWS_REGION,
-    });
-
-    const bucketName = process.env.NEXT_PUBLIC_S3_BUCKET_NAME;
-    if (!bucketName) {
-      console.error("S3 bucket name is not defined");
-      setLoading(false);
-      return;
-    }
-
-    if (!file) {
-      console.error("File is not selected");
-      setLoading(false);
-      return;
-    }
-
-    const params = {
-      Bucket: bucketName,
-      Key: file.name,
-      Body: file,
-      ContentType: file.type,
-    };
-
-    try {
-      const uploadResult = await s3.upload(params).promise();
-      const fileName = uploadResult.Key;
-
-      const response = await postRequest("/lessons", {
-        course_id: sessionStorage.getItem("courseInfo") ? JSON.parse(sessionStorage.getItem("courseInfo")!).course_id : null,
-        title: data.lessonTitle,
-        role: data.role,
-        topic: data.topic,
-        industry: data.industry,
-        convert_type: data.convertInto,
-        file_name: fileName,
-      });
-
-      if (response && response.data.lesson_id) {
-        toggleDrawer(false)
-        setSnackbarMessage(response.data.message || "Submit API call successful");
-        setSnackbarSeverity("success");
-        fetchLessons()
-      } else {
-        setSnackbarMessage("Submit API call failed");
+        if (response?.data?.message) {
+          setSnackbarMessage(
+            response.data.message || "Submit API call successful"
+          );
+          setSnackbarSeverity("success");
+          fetchLessons();
+        } else {
+          setSnackbarMessage("Submit API call failed");
+          setSnackbarSeverity("error");
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        setSnackbarMessage("Error uploading file");
         setSnackbarSeverity("error");
+      } finally {
+        setLoading(false);
+        setSnackbarOpen(true);
       }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setSnackbarMessage("Error uploading file");
-      setSnackbarSeverity("error");
-    } finally {
-      setLoading(false);
-      setSnackbarOpen(true);
+    } else {
+      if (file && file.size > 25 * 1024 * 1024) {
+        setError("file", {
+          type: "manual",
+          message: "File size should be less than 25MB",
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      const s3 = new AWS.S3({
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY,
+        region: process.env.NEXT_PUBLIC_AWS_REGION,
+      });
+
+      const bucketName = process.env.NEXT_PUBLIC_S3_BUCKET_NAME;
+      if (!bucketName) {
+        console.error("S3 bucket name is not defined");
+        setLoading(false);
+        return;
+      }
+
+      if (!file) {
+        console.error("File is not selected");
+        setLoading(false);
+        return;
+      }
+
+      const params = {
+        Bucket: bucketName,
+        Key: file.name,
+        Body: file,
+        ContentType: file.type,
+      };
+
+      try {
+        const uploadResult = await s3.upload(params).promise();
+        const fileName = uploadResult.Key;
+
+        const response = await postRequest("/lessons", {
+          course_id: sessionStorage.getItem("courseInfo")
+            ? JSON.parse(sessionStorage.getItem("courseInfo")!).course_id
+            : null,
+          title: data.lessonTitle,
+          role: data.role,
+          topic: data.topic,
+          industry: data.industry,
+          convert_type: data.convertInto,
+          file_name: fileName,
+        });
+
+        if (response && response.data.lesson_id) {
+          setSnackbarMessage(
+            response.data.message || "Submit API call successful"
+          );
+          setSnackbarSeverity("success");
+          fetchLessons();
+        } else {
+          setSnackbarMessage("Submit API call failed");
+          setSnackbarSeverity("error");
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        setSnackbarMessage("Error uploading file");
+        setSnackbarSeverity("error");
+      } finally {
+        setLoading(false);
+        setSnackbarOpen(true);
+      }
     }
   };
 
@@ -162,13 +229,12 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Title variant="h6" variantMapping={{ h6: "div" }}>
-        Start Creating Lesson
+        {isUpdateFlow ? "Update Lesson" : "Start Creating Lesson"}
       </Title>
       <Subtitle>Lesson Title</Subtitle>
       <Controller
         name="lessonTitle"
         control={control}
-        defaultValue=""
         render={({ field }) => (
           <StyledTextField
             {...field}
@@ -182,7 +248,6 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
       <Controller
         name="role"
         control={control}
-        defaultValue=""
         render={({ field }) => (
           <StyledTextField
             {...field}
@@ -196,7 +261,6 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
       <Controller
         name="topic"
         control={control}
-        defaultValue=""
         render={({ field }) => (
           <StyledTextField
             {...field}
@@ -210,10 +274,10 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
       <Controller
         name="industry"
         control={control}
-        defaultValue=""
         render={({ field }) => (
           <StyledTextField
             {...field}
+            defaultValue={lessonInfo.industry || ""}
             variant="outlined"
             fullWidth
             size="small"
@@ -224,7 +288,6 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
       <Controller
         name="convertInto"
         control={control}
-        defaultValue="text"
         render={({ field }) => (
           <StyledDropdown
             {...field}
@@ -238,21 +301,27 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
           </StyledDropdown>
         )}
       />
-      <Subtitle>Do you have any existing material?</Subtitle>
-      <Description>Upload the PDF document here for better results</Description>
-      <Input
-        type="file"
-        inputProps={{ accept: ".pdf" }}
-        fullWidth
-        onChange={(e) => {
-          const input = e.target as HTMLInputElement;
-          if (input.files && input.files.length > 0) {
-            setFile(input.files[0]);
-          } else {
-            setFile(null);
-          }
-        }}
-      />
+      {!isUpdateFlow && (
+        <>
+          <Subtitle>Do you have any existing material?</Subtitle>
+          <Description>
+            Upload the PDF document here for better results
+          </Description>
+          <Input
+            type="file"
+            inputProps={{ accept: ".pdf" }}
+            fullWidth
+            onChange={(e) => {
+              const input = e.target as HTMLInputElement;
+              if (input.files && input.files.length > 0) {
+                setFile(input.files[0]);
+              } else {
+                setFile(null);
+              }
+            }}
+          />
+        </>
+      )}
       <ButtonContainer>
         <StyledBackButton
           type="button"
@@ -268,7 +337,13 @@ const LessonForm: React.FC<LessonFormProps> = ({ toggleDrawer, fetchLessons }) =
           color="primary"
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : "Add"}
+          {loading ? (
+            <CircularProgress size={24} />
+          ) : isUpdateFlow ? (
+            "Update"
+          ) : (
+            "Add"
+          )}
         </StyledAddButton>
       </ButtonContainer>
       <Snackbar

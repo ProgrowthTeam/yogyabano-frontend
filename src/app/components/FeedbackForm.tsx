@@ -1,7 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { TextField, Box, Button as MuiButton, Typography } from "@mui/material";
+import {
+  TextField,
+  Box,
+  Button as MuiButton,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { postRequest, putRequest } from "../utils/apiUtils";
 
 const Title = styled(Typography)({
   color: "#4F6D7A",
@@ -46,39 +54,133 @@ const StyledAddButton = styled(MuiButton)(({ theme }) => ({
 
 interface FeedbackFormProps {
   toggleDrawer: (open: boolean) => () => void;
+  fetchFeedback: () => void;
+  isUpdateFlow: boolean;
 }
 
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ toggleDrawer }) => {
-  const { control, handleSubmit } = useForm();
+const FeedbackForm: React.FC<FeedbackFormProps> = ({
+  toggleDrawer,
+  isUpdateFlow,
+  fetchFeedback,
+}) => {
+  const feedbackInfo = isUpdateFlow
+    ? JSON.parse(sessionStorage.getItem("feedbackInfo") || "{}")
+    : {};
 
-  const onSubmit = (data: any) => {
-    console.log("Feedback form data:", data);
-    // Handle form submission
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      feedbackQuestion: feedbackInfo.feedback || "",
+    },
+  });
+
+  useEffect(() => {
+    if (isUpdateFlow && feedbackInfo) {
+      reset({
+        feedbackQuestion: feedbackInfo.feedback,
+      });
+    }
+  }, [isUpdateFlow]);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+
+  const onSubmit = async (data: any) => {
+    if (isUpdateFlow) {
+      try {
+        const response = await putRequest("/feedbacks", {
+          feedback_id: feedbackInfo.feedback_id,
+          feedback_question: data.feedbackQuestion,
+        });
+
+        if (response && response.status === 200 || response.status === 201) {
+          setSnackbarMessage("Feedback updated successfully");
+          setSnackbarSeverity("success");
+          fetchFeedback();
+        } else {
+          setSnackbarMessage("Failed to update feedback");
+          setSnackbarSeverity("error");
+        }
+      } catch (error) {
+        console.error("Error updating feedback:", error);
+        setSnackbarMessage("Error updating feedback");
+        setSnackbarSeverity("error");
+      } finally {
+        setSnackbarOpen(true);
+      }
+    } else {
+      try {
+        const response = await postRequest("/feedbacks", {
+          course_id: sessionStorage.getItem("courseInfo")
+            ? JSON.parse(sessionStorage.getItem("courseInfo")!).course_id
+            : null,
+          feedback_question: data.feedbackQuestion,
+        });
+
+        if (response && response.status === 200 || response.status === 201) {
+          setSnackbarMessage("Feedback submitted successfully");
+          setSnackbarSeverity("success");
+          fetchFeedback();
+        } else {
+          setSnackbarMessage("Failed to submit feedback");
+          setSnackbarSeverity("error");
+        }
+      } catch (error) {
+        console.error("Error submitting feedback:", error);
+        setSnackbarMessage("Error submitting feedback");
+        setSnackbarSeverity("error");
+      } finally {
+        setSnackbarOpen(true);
+      }
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Title variant="h6" variantMapping={{ h6: "div" }}>
-        Start Creating Feedback
+        {isUpdateFlow ? "Update Feedback" : "Start Creating Feedback"}
       </Title>
       <Subtitle>Feedback Question</Subtitle>
       <Controller
         name="feedbackQuestion"
         control={control}
-        defaultValue=""
         render={({ field }) => (
-          <StyledTextField {...field} variant="outlined" fullWidth size="small" />
+          <StyledTextField
+            {...field}
+            variant="outlined"
+            fullWidth
+            size="small"
+          />
         )}
       />
-      {/* Add more fields as needed */}
       <ButtonContainer>
-        <StyledBackButton type="button" variant="outlined" color="primary" onClick={toggleDrawer(false)}>
+        <StyledBackButton
+          type="button"
+          variant="outlined"
+          color="primary"
+          onClick={toggleDrawer(false)}
+        >
           Back
         </StyledBackButton>
         <StyledAddButton type="submit" variant="contained" color="primary">
-          Add
+          {isUpdateFlow ? "Update" : "Add"}
         </StyledAddButton>
       </ButtonContainer>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </form>
   );
 };

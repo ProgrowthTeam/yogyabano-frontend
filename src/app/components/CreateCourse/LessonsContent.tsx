@@ -22,6 +22,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EmptyState from "./EmptyState";
 import CreateNewContent from "../CreateNewContent";
 import router from "next/router";
+import { set } from "react-hook-form";
 
 interface Lesson {
   lesson_id: any;
@@ -47,6 +48,7 @@ const LessonsContent: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUpdateFlow, setIsUpdateFlow] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string>("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
@@ -69,6 +71,7 @@ const LessonsContent: React.FC = () => {
         course_id: course.course_id,
       });
       setLessons(response.data);
+      setIsDrawerOpen(false);
     } catch (error) {
       setSnackbarMessage("Error fetching lessons");
       setSnackbarSeverity("error");
@@ -88,29 +91,43 @@ const LessonsContent: React.FC = () => {
   };
 
   const toggleDrawer = (open: boolean) => () => {
+    setIsUpdateFlow(isUpdateFlow);
     setIsDrawerOpen(open);
   };
 
   const handleDeleteLesson = async (lessson: Lesson) => {
+    sessionStorage.removeItem("lessonInfo");
     console.log("Deleting course:", lessson);
     try {
-      await postRequest("/deleteCourses", {
+      await postRequest("/deleteLessons", {
         lesson_id: lessson.lesson_id,
       });
       setSnackbar({
         open: true,
-        message: "Course deleted successfully",
+        message: "Lesson deleted successfully",
         severity: "success",
       });
       await fetchLessons();
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Error deleting course",
+        message: "Error deleting Lesson",
         severity: "error",
       });
     }
   };
+
+  const handleEditLesson = (lesson: Lesson) => {
+    sessionStorage.setItem("lessonInfo", JSON.stringify(lesson));
+    setIsUpdateFlow(true);
+    setIsDrawerOpen(true);
+  };
+
+  const handleAddLessonClick = () => {
+    sessionStorage.removeItem("lessonInfo");
+    setIsUpdateFlow(false);
+    setIsDrawerOpen(true);
+  }
 
   return (
     <Box sx={{ width: "100%", padding: "0 60px" }}>
@@ -136,7 +153,7 @@ const LessonsContent: React.FC = () => {
                 fontStyle: "normal",
                 fontWeight: 400,
                 lineHeight: "normal",
-              }}
+              }}  
             >
               To add more lessons click on “Add lesson”
             </Typography>
@@ -145,6 +162,7 @@ const LessonsContent: React.FC = () => {
               variant="contained"
               color="primary"
               disabled={loading}
+              onClick={handleAddLessonClick}
             >
               + Lesson
             </StyledAddButton>
@@ -164,8 +182,8 @@ const LessonsContent: React.FC = () => {
                   <TableCell>Action</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
-                {lessons.map((lesson, index) => (
+              {lessons.map((lesson, index) => (
+              <TableBody key={lesson.id}>
                   <TableRow key={lesson.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{lesson.title}</TableCell>
@@ -175,13 +193,7 @@ const LessonsContent: React.FC = () => {
                     <TableCell>
                       <IconButton
                         sx={{ color: "#4F6D7A" }}
-                        // onClick={() => {
-                        //   sessionStorage.setItem(
-                        //     "lessonInfo",
-                        //     JSON.stringify(lesson)
-                        //   );
-                        //   router.push("/create-course/lesson-editor");
-                        // }}
+                        onClick={() => handleEditLesson(lesson)}
                       >
                         <EditIcon />
                       </IconButton>
@@ -193,8 +205,8 @@ const LessonsContent: React.FC = () => {
                       </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
               </TableBody>
+              ))}
             </Table>
           </TableContainer>
         </div>
@@ -208,6 +220,7 @@ const LessonsContent: React.FC = () => {
         toggleDrawer={toggleDrawer}
         contentType={contentType}
         fetchLessons={fetchLessons}
+        isUpdateFlow={isUpdateFlow}
       />
       <Snackbar
         open={snackbarOpen}

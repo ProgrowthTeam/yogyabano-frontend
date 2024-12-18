@@ -8,7 +8,10 @@ interface CreateNewContentProps {
   isDrawerOpen: boolean;
   toggleDrawer: (open: boolean) => () => void;
   contentType: { title: string; type: string };
-  fetchLessons: () => void;
+  fetchLessons?: () => void;
+  fetchAssesment?: () => void;
+  fetchFeedback?: () => void;
+  isUpdateFlow?: boolean;
 }
 
 const CreateNewContent: React.FC<CreateNewContentProps> = ({
@@ -16,15 +19,18 @@ const CreateNewContent: React.FC<CreateNewContentProps> = ({
   toggleDrawer,
   contentType,
   fetchLessons,
+  fetchAssesment,
+  fetchFeedback,
+  isUpdateFlow,
 }) => {
   const renderForm = () => {
     switch (contentType.type) {
       case "lesson":
-        return <LessonForm toggleDrawer={toggleDrawer} fetchLessons={fetchLessons} />;
+        return <LessonForm toggleDrawer={toggleDrawer} fetchLessons={fetchLessons ?? (() => {})} isUpdateFlow={isUpdateFlow ?? false} />;
       case "assessment":
-        return <AssessmentForm toggleDrawer={toggleDrawer} />;
+        return <AssessmentForm toggleDrawer={toggleDrawer} fetchAssesment={fetchAssesment ?? (() => {})} isUpdateFlow={isUpdateFlow ?? false} />;
       case "feedback":
-        return <FeedbackForm toggleDrawer={toggleDrawer} />;
+        return <FeedbackForm toggleDrawer={toggleDrawer} fetchFeedback={fetchFeedback ?? (() => {})} isUpdateFlow={isUpdateFlow ?? false} />;
       default:
         return null;
     }

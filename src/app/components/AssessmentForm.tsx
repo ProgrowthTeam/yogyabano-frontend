@@ -46,14 +46,17 @@ const StyledAddButton = styled(MuiButton)(({ theme }) => ({
 
 interface AssessmentFormProps {
   toggleDrawer: (open: boolean) => () => void;
+  fetchAssesment: () => void;
+  isUpdateFlow: boolean;
 }
 
-const AssessmentForm: React.FC<AssessmentFormProps> = ({ toggleDrawer }) => {
+const AssessmentForm: React.FC<AssessmentFormProps> = ({ toggleDrawer, isUpdateFlow, fetchAssesment }) => {
   const { control, handleSubmit } = useForm();
 
   const onSubmit = (data: any) => {
     console.log("Assessment form data:", data);
     // Handle form submission
+    fetchAssesment();
   };
 
   return (
