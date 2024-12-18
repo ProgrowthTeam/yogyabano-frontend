@@ -92,6 +92,7 @@ const LessonForm: React.FC<LessonFormProps> = ({
       topic: lessonInfo.topic || "",
       industry: lessonInfo.industry || "",
       convertInto: lessonInfo.convertInto || "text",
+      file: null,
     },
   });
 
