@@ -159,7 +159,7 @@ const AssessmentContent: React.FC = () => {
     setOrderBy(property);
   };
 
-  const sortedAssessments = assessments.sort((a, b) => {
+  const sortedAssessments = assessments && assessments.sort((a, b) => {
     if (
       orderBy === "number_of_questions" ||
       orderBy === "updated_at" ||
