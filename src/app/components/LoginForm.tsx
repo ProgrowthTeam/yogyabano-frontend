@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   TextField,
@@ -18,8 +19,10 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { styled } from "@mui/material/styles";
 
-import LoginPreview from "../../../public/assets/login_preview.svg";
-import Logo from "../../../public/assets/logo.svg";
+const LoginPreview = dynamic(
+  () => import("../../../public/assets/login_preview.svg")
+);
+const Logo = dynamic(() => import("../../../public/assets/logo.svg"));
 
 import { loginUser } from "../services/login";
 import ErrorMessage from "./ErrorMessage";
@@ -111,37 +114,36 @@ export default function LoginForm() {
   const [error, setError] = useState<string>("");
   const [open, setOpen] = useState<boolean>(false);
 
-  const handleClose = () => setOpen(false);
+  const handleClose = useCallback(() => setOpen(false), []);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      setLoading(true);
+      setError("");
 
-    const { data, error } = await loginUser(email, password);
-    sessionStorage.setItem("user", JSON.stringify(data));
-    console.log("kishan", data)
+      const { data, error } = await loginUser(email, password);
+      sessionStorage.setItem("user", JSON.stringify(data));
+      console.log("kishan", data);
 
-    if (error) {
-      setError(error);
-    } else {
-      window.location.href = "/dashboard";
-    }
+      if (error) {
+        setError(error);
+      } else {
+        window.location.href = "/dashboard";
+      }
 
-    setLoading(false);
-  };
+      setLoading(false);
+    },
+    [email, password]
+  );
 
-  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleClickShowPassword = useCallback(
+    () => setShowPassword(!showPassword),
+    [showPassword]
+  );
 
-  return (
-    <StyledContainer style={{ padding: "60px 60px 0 60px" }}>
-      <StyledLogo>
-        <StyledYogabanoLogo />
-        <StyledTagline>
-          AI Assisted Skilling Platform for Frontline Workers
-        </StyledTagline>
-        <StyledLoginLogo />
-      </StyledLogo>
+  const loginForm = useMemo(
+    () => (
       <StyledLoginForm component="form" onSubmit={handleSubmit}>
         <StyledTypographyHeading variant="h4">
           Welcome to Yogyabano
@@ -194,17 +196,30 @@ export default function LoginForm() {
           >
             {loading ? <CircularProgress size={24} /> : "Continue"}
           </StyledButton>
-          {/* <StyledTermsandConditions variant="h6" onClick={handleOpen}>
-            Terms and Conditions
-          </StyledTermsandConditions>
-          <StyledSignUp>
-            Don&apos;t have an account?&nbsp;
-            <StyledLink href={"https://www.yogyabano.com/contact-us"}>
-              Click here
-            </StyledLink>
-          </StyledSignUp> */}
         </Box>
       </StyledLoginForm>
+    ),
+    [
+      email,
+      password,
+      showPassword,
+      loading,
+      error,
+      handleSubmit,
+      handleClickShowPassword,
+    ]
+  );
+
+  return (
+    <StyledContainer style={{ padding: "60px 60px 0 60px" }}>
+      <StyledLogo>
+        <StyledYogabanoLogo />
+        <StyledTagline>
+          AI Assisted Skilling Platform for Frontline Workers
+        </StyledTagline>
+        <StyledLoginLogo />
+      </StyledLogo>
+      {loginForm}
       <Modal
         open={open}
         onClose={handleClose}
@@ -279,11 +294,11 @@ export default function LoginForm() {
               cycle ends.
             </StyledDisclaimer>
             <StyledDisclaimer>
-              Our services are provided &quot;as is,&quot; without warranties, and we are
-              not liable for indirect damages. Users agree to indemnify us
-              against claims arising from their use of our services. These terms
-              are governed by Indian law, with disputes subject to Bangalore
-              courts.
+              Our services are provided &quot;as is,&quot; without warranties,
+              and we are not liable for indirect damages. Users agree to
+              indemnify us against claims arising from their use of our
+              services. These terms are governed by Indian law, with disputes
+              subject to Bangalore courts.
             </StyledDisclaimer>
             <StyledDisclaimer>
               For any questions, please contact us at &nbsp;
