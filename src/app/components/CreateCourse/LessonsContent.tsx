@@ -67,7 +67,7 @@ const LessonsContent: React.FC = () => {
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [orderBy, setOrderBy] = useState<keyof Lesson>("title");
 
-  const fetchLessons = async (page: number, rowsPerPage: number) => {
+  const fetchLessons = async () => {
     const courseInfo = sessionStorage.getItem("courseInfo");
     try {
       if (!courseInfo) {
@@ -76,8 +76,6 @@ const LessonsContent: React.FC = () => {
       const course = JSON.parse(courseInfo);
       const response = await postRequest("/allLessons", {
         course_id: course.course_id,
-        page,
-        rowsPerPage,
       });
       const sortedLessons = response.data.sort((a: Lesson, b: Lesson) => {
         if (orderBy === "created_at" || orderBy === "updated_at") {
@@ -105,7 +103,7 @@ const LessonsContent: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLessons(page, rowsPerPage);
+    fetchLessons();
   }, [page, rowsPerPage, order, orderBy]);
 
   const handleSnackbarClose = () => {
@@ -129,7 +127,7 @@ const LessonsContent: React.FC = () => {
         message: "Lesson deleted successfully",
         severity: "success",
       });
-      await fetchLessons(page, rowsPerPage);
+      await fetchLessons();
     } catch (error) {
       setSnackbar({
         open: true,
@@ -301,7 +299,7 @@ const LessonsContent: React.FC = () => {
         isDrawerOpen={isDrawerOpen}
         toggleDrawer={toggleDrawer}
         contentType={contentType}
-        fetchLessons={() => fetchLessons(page, rowsPerPage)}
+        fetchLessons={() => fetchLessons()}
         isUpdateFlow={isUpdateFlow}
       />
       <Snackbar
